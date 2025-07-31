@@ -10,6 +10,36 @@ local Workspace = game:GetService("Workspace")
 getgenv().AutoFarmDekuMainAcc = false
 getgenv().AutoFarmDekuAlt = false
 
+-- Debug notification function
+local function debugNotify(message, duration)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "DebugNotify"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = Players.LocalPlayer.PlayerGui
+
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 200, 0, 50)
+    Frame.Position = UDim2.new(0, 10, 0, 10)
+    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Frame.Parent = ScreenGui
+
+    local Text = Instance.new("TextLabel")
+    Text.Size = UDim2.new(1, -10, 1, -10)
+    Text.Position = UDim2.new(0, 5, 0, 5)
+    Text.BackgroundTransparency = 1
+    Text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Text.TextSize = 14
+    Text.Font = Enum.Font.SourceSans
+    Text.TextWrapped = true
+    Text.Text = message
+    Text.Parent = Frame
+
+    task.spawn(function()
+        task.wait(duration or 2)
+        ScreenGui:Destroy()
+    end)
+end
+
 -- GUI Creation
 local function createGui()
     local ScreenGui = Instance.new("ScreenGui")
@@ -18,8 +48,8 @@ local function createGui()
     ScreenGui.Parent = Players.LocalPlayer.PlayerGui
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 300, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, 300, 0, 200)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
@@ -75,54 +105,29 @@ local function createGui()
         end)
     end
 
-    local NotificationFrame = Instance.new("Frame")
-    NotificationFrame.Size = UDim2.new(0, 200, 0, 50)
-    NotificationFrame.Position = UDim2.new(0, 10, 0, 10)
-    NotificationFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    NotificationFrame.BorderSizePixel = 0
-    NotificationFrame.Visible = false
-    NotificationFrame.Parent = ScreenGui
-
-    local NotificationText = Instance.new("TextLabel")
-    NotificationText.Size = UDim2.new(1, -10, 1, -10)
-    NotificationText.Position = UDim2.new(0, 5, 0, 5)
-    NotificationText.BackgroundTransparency = 1
-    NotificationText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    NotificationText.TextSize = 14
-    NotificationText.Font = Enum.Font.SourceSans
-    NotificationText.TextWrapped = true
-    NotificationText.Parent = NotificationFrame
-
-    local function showNotification(message, duration)
-        NotificationText.Text = message
-        NotificationFrame.Visible = true
-        task.spawn(function()
-            task.wait(duration)
-            NotificationFrame.Visible = false
-        end)
-    end
-
-    createToggle("Start Farming (Main Account)", "Kills bosses", function(value)
+    createToggle("Start Farming (Main)", "Kills bosses", function(value)
+        debugNotify("Main Account Toggle: " .. (value and "ON" or "OFF"))
         getgenv().AutoFarmDekuMainAcc = value
         if value then
             getgenv().AutoFarmDekuMainAccFunction()
         end
     end)
 
-    createToggle("Support Tasks (Alt Account)", "Summons bosses", function(value)
+    createToggle("Support Tasks (Alt)", "Summons bosses", function(value)
+        debugNotify("Alt Account Toggle: " .. (value and "ON" or "OFF"))
         getgenv().AutoFarmDekuAlt = value
         if value then
             getgenv().AutoFarmDekuAltFunction()
         end
     end)
 
-    showNotification("Deku AutoFarm Script Loaded Successfully", 2)
+    debugNotify("Sakura Hub GUI Loaded Successfully", 2)
     return ScreenGui
 end
 
 -- Main farming function for the main account
 getgenv().AutoFarmDekuMainAccFunction = function()
-    local WaitBossPosCoords = Vector3.new(-1212, -150, -324) -- Wait Coords
+    local WaitBossPosCoords = Vector3.new(-168, 791, -8038) -- Ruined City coordinates
     local questID = 33
     local skillKeys = {}
     local supportPlayerName = nil
@@ -220,11 +225,9 @@ getgenv().AutoFarmDekuMainAccFunction = function()
             SkillGui:Destroy()
         end)
 
-        repeat task.wait(0.1) until result
-        NotificationFrame.Visible = true
-        NotificationText.Text = #result > 0 and "Skills Selected" or "Skill Selection Canceled"
-        task.wait(1)
-        NotificationFrame.Visible = false
+        debugNotify("Skill Selection GUI Opened")
+        repeat task.wait(0.1) until result ~= nil
+        debugNotify(#result > 0 and "Skills Selected: " .. table.concat(result, ", ") or "Skill Selection Canceled")
         return result
     end
 
@@ -324,15 +327,14 @@ getgenv().AutoFarmDekuMainAccFunction = function()
             SupportGui:Destroy()
         end)
 
+        debugNotify("Support Player Selection GUI Opened")
         repeat task.wait(0.1) until result ~= nil or SupportGui.Parent == nil
-        NotificationFrame.Visible = true
-        NotificationText.Text = result and "Support Player Selected" or "Support Selection Canceled"
-        task.wait(1)
-        NotificationFrame.Visible = false
+        debugNotify(result and "Support Player Selected: " .. result or "Support Selection Canceled")
         return result
     end
 
     task.spawn(function()
+        debugNotify("Main Account AutoFarm Started")
         while getgenv().AutoFarmDekuMainAcc do
             pcall(function()
                 setNoClip(true)
@@ -340,6 +342,7 @@ getgenv().AutoFarmDekuMainAccFunction = function()
                     skillKeys = showSkillGui()
                     if #skillKeys == 0 then
                         getgenv().AutoFarmDekuMainAcc = false
+                        debugNotify("Main Account AutoFarm Stopped: No Skills Selected")
                         return
                     end
                 end
@@ -347,23 +350,23 @@ getgenv().AutoFarmDekuMainAccFunction = function()
                     supportPlayerName = showSupportGui()
                     if not supportPlayerName then
                         getgenv().AutoFarmDekuMainAcc = false
+                        debugNotify("Main Account AutoFarm Stopped: No Support Player")
                         return
                     end
-                    NotificationFrame.Visible = true
-                    NotificationText.Text = "Waiting For Bosses..."
-                    task.wait(1.5)
-                    NotificationFrame.Visible = false
+                    debugNotify("Waiting For Bosses...")
                 end
 
                 local prompt = Workspace.Map.RuinedCity.Spawn.ProximityPrompt
                 local promptB = Workspace.Map.RuinedCity.Spawn.ProximityPromptB
 
-                if prompt.Enabled or promptB.Enabled then
-                    if promptB.Enabled then
+                if prompt and prompt.Enabled or promptB and promptB.Enabled then
+                    if promptB and promptB.Enabled then
                         ReplicatedStorage.QuestRemotes.AcceptQuest:FireServer(questID)
+                        debugNotify("Accepted Quest " .. questID)
                     end
-                    if prompt.Enabled then
+                    if prompt and prompt.Enabled then
                         fireproximityprompt(prompt)
+                        debugNotify("Triggered ProximityPrompt")
                     end
 
                     local boss
@@ -375,10 +378,7 @@ getgenv().AutoFarmDekuMainAccFunction = function()
                         local hrp = boss.HumanoidRootPart
                         local pos = hrp.Position - hrp.CFrame.LookVector * 7
                         Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos, hrp.Position)
-                        NotificationFrame.Visible = true
-                        NotificationText.Text = "Teleported to " .. boss.Name
-                        task.wait(1)
-                        NotificationFrame.Visible = false
+                        debugNotify("Teleported to " .. boss.Name)
                         while boss.Parent and boss.Humanoid.Health > 0 and getgenv().AutoFarmDekuMainAcc do
                             for _, key in ipairs(skillKeys) do
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[key], false, game)
@@ -390,30 +390,31 @@ getgenv().AutoFarmDekuMainAccFunction = function()
                         end
                         if boss.Name == "Roland" then
                             ReplicatedStorage.QuestRemotes.ClaimQuest:FireServer(questID)
+                            debugNotify("Claimed Quest " .. questID)
                         end
                         Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(WaitBossPosCoords)
                     end
                 else
                     if Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                         Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(WaitBossPosCoords)
+                        debugNotify("Moved to Waiting Position")
                     end
                 end
+            end, function(err)
+                debugNotify("Error in Main Loop: " .. tostring(err), 5)
             end)
             task.wait(0.35)
         end
         setNoClip(false)
         skillKeys = {}
         supportPlayerName = nil
-        NotificationFrame.Visible = true
-        NotificationText.Text = "Main Account AutoFarm Stopped"
-        task.wait(1.5)
-        NotificationFrame.Visible = false
+        debugNotify("Main Account AutoFarm Stopped")
     end)
 end
 
 -- Support function for the alt account
 getgenv().AutoFarmDekuAltFunction = function()
-    local WaitBossPosCoords = Vector3.new(-1212, -150, -324) -- Wait Coords
+    local WaitBossPosCoords = Vector3.new(-168, 791, -8038) -- Ruined City coordinates
     local questID = 33
 
     local function showOAGui()
@@ -468,18 +469,26 @@ getgenv().AutoFarmDekuAltFunction = function()
 
         local selected = false
         SelectButton.MouseButton1Click:Connect(function()
-            for i = 1, 100 do
-                if Players.LocalPlayer.PlayerGui.StandStorage.Outer.Inner.Inner["Slot" .. i].Text.Text == "OA [Stage 4]" then
-                    local args = {"Slot" .. i}
-                    if i <= 6 then
-                        ReplicatedStorage.StorageRemote["Slot" .. i]:FireServer()
-                    else
-                        ReplicatedStorage.StorageRemote.UseStorageExtra:FireServer(unpack(args))
+            pcall(function()
+                for i = 1, 100 do
+                    if Players.LocalPlayer.PlayerGui.StandStorage.Outer.Inner.Inner["Slot" .. i].Text.Text == "OA [Stage 4]" then
+                        local args = {"Slot" .. i}
+                        if i <= 6 then
+                            ReplicatedStorage.StorageRemote["Slot" .. i]:FireServer()
+                        else
+                            ReplicatedStorage.StorageRemote.UseStorageExtra:FireServer(unpack(args))
+                        end
+                        selected = true
+                        debugNotify("OA Stage 4 Equipped")
+                        break
                     end
-                    selected = true
-                    break
                 end
-            end
+                if not selected then
+                    debugNotify("OA Stage 4 Not Found in Storage", 3)
+                end
+            end, function(err)
+                debugNotify("Error Equipping OA: " .. tostring(err), 5)
+            end)
         end)
 
         Continue.MouseButton1Click:Connect(function()
@@ -490,27 +499,28 @@ getgenv().AutoFarmDekuAltFunction = function()
             OAGui:Destroy()
         end)
 
+        debugNotify("OA Selection GUI Opened")
         repeat task.wait(0.1) until OAGui.Parent == nil
-        NotificationFrame.Visible = true
-        NotificationText.Text = selected and "OA Stage 4 Selected" or "OA Selection Canceled"
-        task.wait(1)
-        NotificationFrame.Visible = false
+        debugNotify(selected and "OA Stage 4 Selected" or "OA Selection Canceled")
         return selected
     end
 
     task.spawn(function()
+        debugNotify("Alt Account AutoFarm Started")
         while getgenv().AutoFarmDekuAlt do
             pcall(function()
                 if Players.LocalPlayer.Data.StandName.Value ~= "OA [Stage 4]" then
                     if not showOAGui() then
                         getgenv().AutoFarmDekuAlt = false
+                        debugNotify("Alt Account AutoFarm Stopped: No OA Stage 4")
                         return
                     end
                 end
 
                 local promptB = Workspace.Map.RuinedCity.Spawn.ProximityPromptB
-                if promptB.Enabled then
+                if promptB and promptB.Enabled then
                     fireproximityprompt(promptB)
+                    debugNotify("Triggered ProximityPromptB")
                     task.wait(3)
                     local pb = WaitBossPosCoords - Vector3.new(0, 0, 5)
                     Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pb)
@@ -521,38 +531,42 @@ getgenv().AutoFarmDekuAltFunction = function()
                             if v:IsA("ProximityPrompt") then
                                 v.HoldDuration = 0
                                 fireproximityprompt(v)
+                                debugNotify("Triggered OA's Grace Prompt")
                             end
                         end
                         local X, Y = UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y + 10
                         VirtualInputManager:SendMouseButtonEvent(X, Y, 0, true, game, 1)
                         task.wait(0.01)
                         VirtualInputManager:SendMouseButtonEvent(X, Y, 0, false, game, 1)
+                        debugNotify("Performed Autoclick for OA's Grace")
                     end
                     local boss = Workspace.Living:FindFirstChild("Roland")
-                    if boss and boss.Humanoid.Health < 8000 then
+                    if boss and boss.Humanoid and boss.Humanoid.Health < 8000 then
                         for i = 1, 2 do
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                             task.wait(0.1)
                             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                             task.wait(0.2)
                         end
+                        debugNotify("Attacked Roland with E")
                         Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pb)
                     end
                     ReplicatedStorage.QuestRemotes.ClaimQuest:FireServer(questID)
+                    debugNotify("Claimed Quest " .. questID)
                 else
                     if Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                         Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(WaitBossPosCoords)
+                        debugNotify("Moved to Waiting Position")
                     end
                 end
+            end, function(err)
+                debugNotify("Error in Alt Loop: " .. tostring(err), 5)
             end)
             task.wait(0.35)
         end
-        NotificationFrame.Visible = true
-        NotificationText.Text = "Alt Account AutoFarm Stopped"
-        task.wait(1.5)
-        NotificationFrame.Visible = false
+        debugNotify("Alt Account AutoFarm Stopped")
     end)
 end
 
 -- Initialize GUI
-local NotificationFrame, NotificationText = createGui():FindFirstChild("NotificationFrame"), createGui():FindFirstChild("NotificationFrame"):FindFirstChild("TextLabel")
+createGui()
