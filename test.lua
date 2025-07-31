@@ -122,7 +122,7 @@ end
 
 -- Main farming function for the main account
 getgenv().AutoFarmDekuMainAccFunction = function()
-    local WaitBossPosCoords = Vector3.new(-168, 791, -8038) -- Ruined City coordinates
+    local WaitBossPosCoords = Vector3.new(-1212, -150, -324) -- Wait Coords
     local questID = 33
     local skillKeys = {}
     local supportPlayerName = nil
@@ -413,7 +413,7 @@ end
 
 -- Support function for the alt account
 getgenv().AutoFarmDekuAltFunction = function()
-    local WaitBossPosCoords = Vector3.new(-168, 791, -8038) -- Ruined City coordinates
+    local WaitBossPosCoords = Vector3.new(-1212, -150, -324) -- Wait Coords
     local questID = 33
 
     local function showOAGui()
